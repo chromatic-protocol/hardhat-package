@@ -1,0 +1,6 @@
+export const PLUGIN_NAME = 'package'
+export const TASK_PACKAGE = 'package'
+export const TASK_PACKAGE_TYPECHAIN = 'package:typechain'
+export const TASK_PACKAGE_ADDRESS = 'package:address'
+export const TASK_PACKAGE_GET_DEPLOYED_ADDRESS = 'package:get-deployed-address'
+export const TASK_PACKAGE_WRITE_DEPLOYED = 'package:write-deployed-json'

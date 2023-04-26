@@ -1,0 +1,52 @@
+{
+  "name": "@usum-io/hardhat-package",
+  "version": "0.0.1-dev1",
+  "description": "",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "scripts": {
+    "prebuild": "rm -rf dist",
+    "build": "tsc --project tsconfig.prod.json",
+    "buidl": "tsc",
+    "watch": "tsc -w",
+    "test": "mocha --exit --recursive 'test/**/*.test.ts'",
+    "prepublishOnly": "tsc --project tsconfig.prod.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/usum-io/hardhat-package.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/usum-io/hardhat-package/issues"
+  },
+  "homepage": "https://github.com/usum-io/hardhat-package#readme",
+  "files": [
+    "dist/src/",
+    "src/",
+    "README.md"
+  ],
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.1.1",
+    "@typechain/ethers-v5": "^10.1.0",
+    "@typechain/hardhat": "^6.1.2",
+    "@types/chai": "^4.3.3",
+    "@types/fs-extra": "^9.0.13",
+    "@types/mocha": "7.0.2",
+    "@types/node": "^18.11.9",
+    "chai": "^4.3.6",
+    "chalk": "^2.4.2",
+    "ethers": "^5.7.1",
+    "hardhat": "^2.10.2",
+    "hardhat-deploy": "^0.11.20",
+    "mocha": "7.2.0",
+    "prettier": "2.0.5",
+    "ts-node": "^10.9.1",
+    "tslint": "^5.20.1",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-plugin-prettier": "^2.3.0",
+    "typechain": "^8.1.1",
+    "typescript": "^4.9.3"
+  }
+}
