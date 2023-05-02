@@ -1,4 +1,4 @@
-# :package: @usum-io/hardhat-package
+# :package: @chromatic-finance/hardhat-package
 
 You can easily pack and publish a hardhat project to interact deployed contracts.
 
@@ -6,26 +6,26 @@ You can easily pack and publish a hardhat project to interact deployed contracts
 a nice cocktail :cocktail: of `hardhat + typechain + hardhat-deploy + hardhat-ethers` :smile:
 - compile contracts with `@typechain/ethers-v5`
 - deploy with `hardhat-deploy`
-- pack by this `@usum-io/hardhat-package`
+- pack by this `@chromatic-finance/hardhat-package`
 - finally publish your interfaces as a package.
 - and use this in any other related projects for example a web front-end project etc 
 
 ## Installation
 
 ```bash
-npm install @usum-io/hardhat-package
+npm install @chromatic-finance/hardhat-package
 ```
 
 Import the plugin in your `hardhat.config.js`:
 
 ```js
-require("@usum-io/hardhat-package")
+require("@chromatic-finance/hardhat-package")
 ```
 
 Or if you are using TypeScript, in your `hardhat.config.ts`:
 
 ```ts
-import "@usum-io/hardhat-package"
+import "@chromatic-finance/hardhat-package"
 ```
 
 ## Required plugins
@@ -68,7 +68,7 @@ import '@nomiclabs/hardhat-ethers'
 import '@typechain/hardhat'
 import 'hardhat-deploy'
 
-import '@usum-io/hardhat-package'
+import '@chromatic-finance/hardhat-package'
 
 const config: HardhatUserConfig = {
   solidity: '0.8.17',
@@ -89,7 +89,7 @@ const config: HardhatUserConfig = {
       default: 0
     }
   },
-  // example configuration of @usum-io/hardhat-package
+  // example configuration of @chromatic-finance/hardhat-package
   package: {
     outDir: 'dist'  // default without config.
     packageJson: 'package.sdk.json'  // default without config.
