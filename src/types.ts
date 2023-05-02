@@ -3,6 +3,7 @@ export interface TypechainPackageConfig {
   packageJson?: string
   outputTarget?: string
   includeDeployed?: boolean
+  artifactFromDeployment?: boolean
   // tsconfigJson?: string // not implemented yet
   buildDir?: string // generating typechin types to this folder
   includes?: Array<string> // contract name pattern to include

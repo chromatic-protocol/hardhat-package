@@ -1,14 +1,11 @@
+import type { Export, MultiExport } from 'hardhat-deploy/types'
 import type { HardhatConfig, HardhatRuntimeEnvironment } from 'hardhat/types'
-import type { MultiExport, Export } from 'hardhat-deploy/types'
 
-import path from 'path'
 import fs from 'fs'
+import path from 'path'
 
 export function defaultIncludeDeployed(config: HardhatConfig): boolean {
   console.log(config.paths)
-  if (config.paths.deployments === undefined) {
-    return false
-  }
   try {
     let allDeployed = loadAllDeployed({ config })
     for (const network of Object.keys(allDeployed)) {
