@@ -253,7 +253,6 @@ async function buildCode(
       throw new HardhatPluginError(PLUGIN_NAME, 'index.ts not found')
     }
   }
-  // tsc esm
   try {
     if (config.package.includeDeployed) {
       fs.renameSync(indexTs, path.join(typechainPath, 'typechain.ts'))
@@ -269,17 +268,22 @@ async function buildCode(
       console.log('setting new "index.ts"')
       buildIndexSource(hre, outputTarget, typechainPath)
     }
+    // cp src.ts
+    let outDir = normalizePath(config.paths.root, config.package.outDir)
+    let srcDir = path.join(outDir, 'src.ts')
+    fs.cpSync(typechainPath, srcDir, { recursive: true })
+
+    // tsc esm
     console.log('building esm output...')
-    buildTypeChain(getTsconfig('esm', config), typechainPath, build)
+    buildTypeChain(getTsconfig('esm', config), srcDir, build)
+
     // tsc cjs
     console.log('building cjs output...')
-    buildTypeChain(getTsconfig('cjs', config), typechainPath, build)
+    buildTypeChain(getTsconfig('cjs', config), srcDir, build)
+
     console.log(chalk.green('✨ tsc compiled package'))
 
     console.log(`copying ${typechainPath} to src.ts ...`)
-    let outDir = normalizePath(config.paths.root, config.package.outDir)
-
-    fs.cpSync(typechainPath, path.join(outDir, 'src.ts'), { recursive: true })
   } finally {
     // rm index.ts
     // remove tsconfig
@@ -327,7 +331,7 @@ function getTsconfig(moduleType: 'esm' | 'cjs', config: HardhatConfig, clean: bo
   if (!clean && config.package.outputTarget === 'address') {
     tsconfig.include = ['index.ts']
   }
-  tsconfig.compilerOptions.outDir = `../${conf.outDir}/${moduleType}`
+  tsconfig.compilerOptions.outDir = `../${moduleType}`
   return tsconfig
 }
 
