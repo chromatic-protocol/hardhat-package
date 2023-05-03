@@ -16,7 +16,7 @@ export function getDeployedAddress(contractName: string, chainName: string): str
   return deployed[chainName][contractName]
 }
 
-export function getContract(contractName: string, chainName: string, signerOrProvider?: Provider | Signer): BaseContract | undefined {
+export function getDeployedContract(contractName: string, chainName: string, signerOrProvider?: Provider | Signer): BaseContract | undefined {
   const address = getDeployedAddress(contractName, chainName)
   const factoryName = \`$\{contractName\}__factory\`
   let factory: ContractFactoryConnect;
@@ -42,16 +42,16 @@ interface Contracts {
   [prop: string]: BaseContract
 }
 
-export function getAllContracts(chainName: string): Contracts {
+export function getAllDeployedContracts(chainName: string): Contracts {
   const contracts = deployed[chainName]
   let output: Contracts = {}
   for (let name of Object.keys(contracts)) {
-    output[name] = getContract(name, chainName)
+    output[name] = getDeployedContract(name, chainName)
   }
   return output
 }
 
-export function getContractNames(chainName: string): Array<string> {
+export function getDeployedContractNames(chainName: string): Array<string> {
   const contracts = deployed[chainName]
   return Object.keys(contracts)
 }
