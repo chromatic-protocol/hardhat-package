@@ -12,6 +12,7 @@ import pkgDefault from './config/package.dist.json'
 import tsCjs from './config/tsconfig.cjs.json'
 import tsEsm from './config/tsconfig.esm.json'
 import { getIndexAddressSource } from './template/address-template'
+import { getDeployedSource } from './template/deployed-template'
 import { getIndexSource } from './template/index-template'
 
 import chalk from 'chalk'
@@ -415,7 +416,7 @@ subtask(TASK_PACKAGE_GET_DEPLOYED_ADDRESS, 'show deployed addresses').setAction(
   }
 )
 
-subtask(TASK_PACKAGE_WRITE_DEPLOYED, 'write deployed.json')
+subtask(TASK_PACKAGE_WRITE_DEPLOYED, 'write deployed.ts')
   .addOptionalPositionalParam(
     'outputPath',
     'packaging output path or filena',
@@ -429,9 +430,9 @@ subtask(TASK_PACKAGE_WRITE_DEPLOYED, 'write deployed.json')
 
       // write deployed inforamtion
       console.log(chalk.green('deployed:'), deployed)
-
       console.log('writing deployed addresses')
-      fs.writeFileSync(path.join(outputPath, 'deployed.json'), JSON.stringify(deployed, null, 2))
+      const source = getDeployedSource(deployed)
+      fs.writeFileSync(path.join(outputPath, 'deployed.ts'), source)
     } catch (e) {
       throw new HardhatPluginError(PLUGIN_NAME, e.message)
     }

@@ -5,7 +5,7 @@ import type { Provider } from '@ethersproject/providers'
 import type { ${targetInfo.contractClass} } from '${targetInfo.contractPackage}'
 export * from './typechain'
 import * as factoryModule from './typechain'
-import * as deployed from './deployed.json'
+import { deployed } from './deployed'
 export { deployed }
 
 export function getDeployedAddress(contractName: string, chainName: string): string {
@@ -17,6 +17,7 @@ export function getContract(contractName: string, chainName: string, signerOrPro
 
   try {
     const factoryName = \`$\{contractName\}__factory\`
+    //@ts-ignore
     const factory = factoryModule[factoryName]
     // console.log('factory:', factory)
     return factory.connect(address, signerOrProvider)
@@ -32,7 +33,7 @@ interface Contracts {
 
 export function getAllContracts(chainName: string): Contracts {
   const contracts = deployed[chainName]
-  let output = {}
+  let output: Contracts = {}
   for (let name of Object.keys(contracts)) {
     output[name] = getContract(name, chainName)
   }
