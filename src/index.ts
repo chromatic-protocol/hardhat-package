@@ -4,13 +4,13 @@ import { HardhatPluginError } from 'hardhat/plugins'
 import type { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { HardhatConfig, HardhatUserConfig, TaskArguments } from 'hardhat/types'
 import { glob, runTypeChain } from 'typechain'
-
 import { defaultIncludeDeployed, getDeployedContractNames, getDeployedFiltered } from './utils'
 export { getDeployedFiltered }
 
 import pkgDefault from './config/package.dist.json'
 import tsCjs from './config/tsconfig.cjs.json'
 import tsEsm from './config/tsconfig.esm.json'
+import { generateReadme } from './impl/generateReadme'
 import { getIndexAddressSource } from './template/address-template'
 import { getDeployedSource } from './template/deployed-template'
 import { getIndexSource } from './template/index-template'
@@ -19,6 +19,7 @@ import chalk from 'chalk'
 import fs from 'fs'
 import path from 'path'
 
+import { normalizePath } from './impl/utils'
 // This import is needed to let the TypeScript compiler know that it should include your type
 // extensions in your npm package's types file.
 import {
@@ -57,12 +58,6 @@ extendConfig((config: HardhatConfig, userConfig: Readonly<HardhatUserConfig>) =>
   packageConfig = { ...defaultConfig, ...packageConfig }
   config.package = packageConfig
 })
-
-function normalizePath(base: string, other: string): string {
-  const res = path.join(base, other)
-  if (path.isAbsolute(res)) return res
-  else return path.normalize(res)
-}
 
 task(TASK_PACKAGE, 'package contracts')
   .addOptionalPositionalParam(
@@ -143,7 +138,7 @@ async function generateTypechain(config: HardhatConfig) {
   }
 
   // filesToProcess
-  let filesToProcess = allFiles // let default
+  let filesToProcess = [...allFiles] // let default
   if (config.package.includes) {
     const includes = config.package.includes.map((x) =>
       config.package.artifactFromDeployment
@@ -208,6 +203,9 @@ async function packageCommon(
   } catch (e) {
     throw new HardhatPluginError(PLUGIN_NAME, e.message)
   }
+  console.log(chalk.green('generating README'))
+  await generateReadme(hre)
+
   console.log(chalk.green('writing package.json'))
   writePackageJson(config)
 

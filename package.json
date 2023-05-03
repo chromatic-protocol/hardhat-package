@@ -1,6 +1,6 @@
 {
   "name": "@chromatic-finance/hardhat-package",
-  "version": "0.0.1-dev.7",
+  "version": "0.0.1-dev.8",
   "description": "",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -29,7 +29,8 @@
   ],
   "dependencies": {
     "chalk": "^2.4.2",
-    "minimatch": "^9.0.0"
+    "minimatch": "^9.0.0",
+    "solidity-docgen": "^0.6.0-beta.35"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.1.1",
