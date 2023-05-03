@@ -1,6 +1,6 @@
 export function getIndexAddressSource() {
   return `
-import * as deployed from './deployed.json'
+import { deployed } from './deployed'
 export { deployed }
 `
 }

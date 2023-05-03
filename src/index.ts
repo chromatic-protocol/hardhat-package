@@ -12,6 +12,7 @@ import pkgDefault from './config/package.dist.json'
 import tsCjs from './config/tsconfig.cjs.json'
 import tsEsm from './config/tsconfig.esm.json'
 import { getIndexAddressSource } from './template/address-template'
+import { getDeployedSource } from './template/deployed-template'
 import { getIndexSource } from './template/index-template'
 
 import chalk from 'chalk'
@@ -30,14 +31,27 @@ import {
 } from './task-names'
 import './type-extensions'
 
+function updatePackageConfig(config: HardhatConfig) {
+  const includeDeployed: boolean = defaultIncludeDeployed(config)
+  config.package = {
+    ...config.package,
+    includeDeployed:
+      config.package.includeDeployed === undefined
+        ? includeDeployed
+        : config.package.includeDeployed,
+    artifactFromDeployment:
+      config.package.artifactFromDeployment === undefined
+        ? includeDeployed
+        : config.package.artifactFromDeployment
+  }
+}
+
 extendConfig((config: HardhatConfig, userConfig: Readonly<HardhatUserConfig>) => {
   let packageConfig = userConfig.package || {}
-
   const defaultConfig = {
     outDir: 'dist',
     packageJson: 'package.json',
     outputTarget: 'typechain',
-    includeDeployed: defaultIncludeDeployed(config),
     buildDir: 'package-build'
   }
   packageConfig = { ...defaultConfig, ...packageConfig }
@@ -60,6 +74,7 @@ task(TASK_PACKAGE, 'package contracts')
   .addOptionalParam('build', 'build or setup only', true, types.boolean)
   .setAction(async ({ taskName, build }, hre: HardhatRuntimeEnvironment) => {
     const { config } = hre
+    updatePackageConfig(config)
     if (config.package.includes === undefined) {
       const contractNames = getDeployedContractNames(hre)
       if (contractNames.length > 0) {
@@ -98,7 +113,12 @@ subtask(TASK_PACKAGE_ADDRESS, 'package deployed addresses only')
 async function generateTypechain(config: HardhatConfig) {
   const cwd = config.paths.root
   const typechainCfg = config.typechain as any // TypechainConfig
-  const allFiles = glob(cwd, [`${config.paths.artifacts}/!(build-info)/**/+([a-zA-Z0-9_]).json`])
+
+  const allFiles = glob(cwd, [
+    config.package.artifactFromDeployment
+      ? `${config.paths.deployments}/**/!(solcInputs)/**/+([a-zA-Z0-9_]).json`
+      : `${config.paths.artifacts}/!(build-info)/**/+([a-zA-Z0-9_]).json`
+  ])
 
   // temporarily fixing: runTypeChain cannot resolve package?
   const targetPath =
@@ -109,6 +129,9 @@ async function generateTypechain(config: HardhatConfig) {
   const typechainOptions = {
     cwd,
     // allFiles,
+    inputDir: config.package.artifactFromDeployment
+      ? config.paths.deployments
+      : config.paths.artifacts,
     outDir: config.package.buildDir,
     target: targetPath || typechainCfg.target,
     flags: {
@@ -122,8 +145,10 @@ async function generateTypechain(config: HardhatConfig) {
   // filesToProcess
   let filesToProcess = allFiles // let default
   if (config.package.includes) {
-    const includes = config.package.includes.map(
-      (x) => `${config.paths.artifacts}/!(build-info)/**/${x}.json`
+    const includes = config.package.includes.map((x) =>
+      config.package.artifactFromDeployment
+        ? `${config.paths.deployments}/!(solcInputs)/**/${x}.json`
+        : `${config.paths.artifacts}/!(build-info)/**/${x}.json`
     )
     let includeFiles = glob(cwd, includes)
     filesToProcess = filesToProcess.filter((x) => includeFiles.includes(x))
@@ -131,13 +156,21 @@ async function generateTypechain(config: HardhatConfig) {
   if (config.package.excludes) {
     // glob pattern can include folder pattern
     // ex) ['@openzepplin/**/*']
-    let excludes = config.package.excludes.map((x) => `${config.paths.artifacts}/${x}.json`)
+    let excludes = config.package.excludes.map((x) =>
+      config.package.artifactFromDeployment
+        ? `${config.paths.deployments}/${x}.json`
+        : `${config.paths.artifacts}/${x}.json`
+    )
     let excludeFiles = glob(cwd, excludes)
     filesToProcess = filesToProcess.filter((x) => !excludeFiles.includes(x))
 
     // glob pattern can include contract name pattern
     // ex) ['Mock**']
-    excludes = config.package.excludes.map((x) => `${config.paths.artifacts}/**/${x}.json`)
+    excludes = config.package.excludes.map((x) =>
+      config.package.artifactFromDeployment
+        ? `${config.paths.deployments}/**/${x}.json`
+        : `${config.paths.artifacts}/**/${x}.json`
+    )
     excludeFiles = glob(cwd, excludes)
     filesToProcess = filesToProcess.filter((x) => !excludeFiles.includes(x))
   }
@@ -236,13 +269,17 @@ async function buildCode(
       console.log('setting new "index.ts"')
       buildIndexSource(hre, outputTarget, typechainPath)
     }
-
     console.log('building esm output...')
     buildTypeChain(getTsconfig('esm', config), typechainPath, build)
     // tsc cjs
     console.log('building cjs output...')
     buildTypeChain(getTsconfig('cjs', config), typechainPath, build)
     console.log(chalk.green('✨ tsc compiled package'))
+
+    console.log(`copying ${typechainPath} to src.ts ...`)
+    let outDir = normalizePath(config.paths.root, config.package.outDir)
+
+    fs.cpSync(typechainPath, path.join(outDir, 'src.ts'), { recursive: true })
   } finally {
     // rm index.ts
     // remove tsconfig
@@ -383,7 +420,7 @@ subtask(TASK_PACKAGE_GET_DEPLOYED_ADDRESS, 'show deployed addresses').setAction(
   }
 )
 
-subtask(TASK_PACKAGE_WRITE_DEPLOYED, 'write deployed.json')
+subtask(TASK_PACKAGE_WRITE_DEPLOYED, 'write deployed.ts')
   .addOptionalPositionalParam(
     'outputPath',
     'packaging output path or filena',
@@ -397,9 +434,9 @@ subtask(TASK_PACKAGE_WRITE_DEPLOYED, 'write deployed.json')
 
       // write deployed inforamtion
       console.log(chalk.green('deployed:'), deployed)
-
       console.log('writing deployed addresses')
-      fs.writeFileSync(path.join(outputPath, 'deployed.json'), JSON.stringify(deployed, null, 2))
+      const source = getDeployedSource(deployed)
+      fs.writeFileSync(path.join(outputPath, 'deployed.ts'), source)
     } catch (e) {
       throw new HardhatPluginError(PLUGIN_NAME, e.message)
     }
