@@ -1,6 +1,6 @@
 {
   "name": "@chromatic-finance/hardhat-package",
-  "version": "0.0.1-dev.6",
+  "version": "0.0.1-dev.7",
   "description": "",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -27,6 +27,10 @@
     "src/",
     "README.md"
   ],
+  "dependencies": {
+    "chalk": "^2.4.2",
+    "minimatch": "^9.0.0"
+  },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.1.1",
     "@typechain/ethers-v5": "^10.1.0",
@@ -36,11 +40,9 @@
     "@types/mocha": ">=9.1.0",
     "@types/node": "^18.11.9",
     "chai": "^4.3.6",
-    "chalk": "^2.4.2",
     "ethers": "^5.7.1",
     "hardhat": "^2.10.2",
     "hardhat-deploy": "^0.11.20",
-    "minimatch": "^9.0.0",
     "mocha": "^10.0.0",
     "prettier": "2.0.5",
     "ts-node": "^10.9.1",
