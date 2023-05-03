@@ -8,7 +8,8 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "sourceMap": true,
-    "sourceRoot": "../src.ts"
+    "sourceRoot": "",
+    "declarationMap": true
   },
   "include": ["**/*.d.ts", "**/*.ts", "**/*.js"]
 }
