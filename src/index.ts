@@ -269,13 +269,17 @@ async function buildCode(
       console.log('setting new "index.ts"')
       buildIndexSource(hre, outputTarget, typechainPath)
     }
-
     console.log('building esm output...')
     buildTypeChain(getTsconfig('esm', config), typechainPath, build)
     // tsc cjs
     console.log('building cjs output...')
     buildTypeChain(getTsconfig('cjs', config), typechainPath, build)
     console.log(chalk.green('✨ tsc compiled package'))
+
+    console.log(`copying ${typechainPath} to src.ts ...`)
+    let outDir = normalizePath(config.paths.root, config.package.outDir)
+
+    fs.cpSync(typechainPath, path.join(outDir, 'src.ts'), { recursive: true })
   } finally {
     // rm index.ts
     // remove tsconfig

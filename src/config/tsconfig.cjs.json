@@ -6,7 +6,9 @@
     "moduleResolution": "node",
     "declaration": true,
     "resolveJsonModule": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "sourceRoot": "../src.ts"
   },
   "include": ["**/*.d.ts", "**/*.ts", "**/*.js"]
 }
