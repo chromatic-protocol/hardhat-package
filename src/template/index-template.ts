@@ -33,12 +33,14 @@ export function getDeployedAddress(contractName: string, chainName: string): str
 export function getDeployedContract(contractName: string, chainName: string, signerOrProvider?: Provider | Signer): BaseContract | undefined {
   const address = getDeployedAddress(contractName, chainName)
   const factoryName = \`$\{contractName\}__factory\`
-  let factory: ContractFactoryConnect;
+  let factory: ContractFactoryConnect | undefined = undefined;
   try {
     if (chainName in factoryModule) {
+      //@ts-ignore
       factory = factoryModule[chainName][factoryName];
     }
     if(!factory) {
+      //@ts-ignore
       factory = factoryModule[factoryName];
     }
     if (factory) {
@@ -53,7 +55,7 @@ export function getDeployedContract(contractName: string, chainName: string, sig
 }
 
 interface Contracts {
-  [contractName: string]: BaseContract
+  [contractName: string]: BaseContract | undefined
 }
 
 /**
