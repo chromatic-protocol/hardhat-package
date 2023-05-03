@@ -8,4 +8,6 @@ export interface TypechainPackageConfig {
   buildDir?: string // generating typechin types to this folder
   includes?: Array<string> // contract name pattern to include
   excludes?: Array<string> // contract name pattern to exclude
+  includesFromDeployed?: Array<string> // contract name pattern to exclude from deployed
+  excludesFromDeployed?: Array<string> // contract name pattern to exclude from deployed
 }
