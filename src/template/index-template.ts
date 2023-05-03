@@ -2,11 +2,15 @@ export function getIndexSource(targetInfo) {
   return `
 import type { Signer } from '${targetInfo.signerPackage}'
 import type { Provider } from '@ethersproject/providers'
-import type { ${targetInfo.contractClass} } from '${targetInfo.contractPackage}'
+import type { ${targetInfo.contractClass}, ${targetInfo.factoryClass} } from '${targetInfo.contractPackage}'
 export * from './typechain'
 import * as factoryModule from './typechain'
 import { deployed } from './deployed'
 export { deployed }
+
+interface ContractFactoryConnect {
+  connect(address: string, signerOrProvider: Signer | Provider): ${targetInfo.contractClass} 
+}
 
 export function getDeployedAddress(contractName: string, chainName: string): string {
   return deployed[chainName][contractName]
@@ -14,13 +18,20 @@ export function getDeployedAddress(contractName: string, chainName: string): str
 
 export function getContract(contractName: string, chainName: string, signerOrProvider?: Provider | Signer): BaseContract | undefined {
   const address = getDeployedAddress(contractName, chainName)
-
+  const factoryName = \`$\{contractName\}__factory\`
+  let factory: ContractFactoryConnect;
   try {
-    const factoryName = \`$\{contractName\}__factory\`
-    //@ts-ignore
-    const factory = factoryModule[factoryName]
-    // console.log('factory:', factory)
-    return factory.connect(address, signerOrProvider)
+    if (chainName in factoryModule) {
+      factory = factoryModule[chainName][factoryName];
+    }
+    if(!factory) {
+      factory = factoryModule[factoryName];
+    }
+    if (factory) {
+      return factory.connect(address, signerOrProvider);
+    } else {
+      return undefined;
+    }
   } catch (err) {
     console.warn('error:', err)
     return undefined
