@@ -10,4 +10,5 @@ export interface TypechainPackageConfig {
   excludes?: Array<string> // contract name pattern to exclude
   includesFromDeployed?: Array<string> // contract name pattern to exclude from deployed
   excludesFromDeployed?: Array<string> // contract name pattern to exclude from deployed
+  docgen?: any  // config of solidity-docgen
 }
