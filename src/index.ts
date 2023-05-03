@@ -5,8 +5,8 @@ import type { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { HardhatConfig, HardhatUserConfig, TaskArguments } from 'hardhat/types'
 import { glob, runTypeChain } from 'typechain'
 
-import { defaultIncludeDeployed, getDeployedContractNames, loadAllDeployed } from './utils'
-export { loadAllDeployed }
+import { defaultIncludeDeployed, getDeployedContractNames, getDeployedFiltered } from './utils'
+export { getDeployedFiltered }
 
 import pkgDefault from './config/package.dist.json'
 import tsCjs from './config/tsconfig.cjs.json'
@@ -418,7 +418,7 @@ function getTargetInfo(hre: HardhatRuntimeEnvironment) {
 
 subtask(TASK_PACKAGE_GET_DEPLOYED_ADDRESS, 'show deployed addresses').setAction(
   async (taskArgs, hre: HardhatRuntimeEnvironment) => {
-    const deployed = loadAllDeployed(hre)
+    const deployed = getDeployedFiltered(hre)
     // write deployed inforamtion
     console.log(chalk.green('deployed:'), deployed)
   }
@@ -434,7 +434,7 @@ subtask(TASK_PACKAGE_WRITE_DEPLOYED, 'write deployed.ts')
   .setAction(async ({ outputPath }, hre: HardhatRuntimeEnvironment) => {
     // write deployed address info
     try {
-      const deployed = loadAllDeployed(hre)
+      const deployed = getDeployedFiltered(hre)
 
       // write deployed inforamtion
       console.log(chalk.green('deployed:'), deployed)

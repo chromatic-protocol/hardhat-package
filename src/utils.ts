@@ -1,13 +1,13 @@
+import fs from 'fs'
 import type { Export, MultiExport } from 'hardhat-deploy/types'
 import type { HardhatConfig, HardhatRuntimeEnvironment } from 'hardhat/types'
-
-import fs from 'fs'
+import { minimatch } from 'minimatch'
 import path from 'path'
 
 export function defaultIncludeDeployed(config: HardhatConfig): boolean {
   console.log(config.paths)
   try {
-    let allDeployed = loadAllDeployed({ config })
+    let allDeployed = getDeployedFiltered({ config } as HardhatRuntimeEnvironment)
     for (const network of Object.keys(allDeployed)) {
       for (const contract of Object.keys(allDeployed[network])) {
         // 배포된 컨트랙트 주소가 하나라도 있으면 true!
@@ -22,8 +22,14 @@ export function defaultIncludeDeployed(config: HardhatConfig): boolean {
   return false
 }
 
-export function loadAllDeployed(hre) {
+export function getDeployedFiltered(hre: HardhatRuntimeEnvironment) {
   const deploymentPath = hre.config.paths.deployments
+  let includes = hre.config.package.includesFromDeployed || ['*']
+  let excludes = hre.config.package.excludesFromDeployed || []
+
+  const checkInclude = (name) => includes.map((x) => minimatch.filter(x)).some((f) => f(name))
+  const checkExclude = (name) => excludes.map((x) => minimatch.filter(x)).some((f) => f(name))
+
   let res: MultiExport = loadAllDeployments(hre, deploymentPath, true)
 
   const output = {}
@@ -32,7 +38,8 @@ export function loadAllDeployed(hre) {
       if (!output[network.name]) output[network.name] = {}
       let contracts = network.contracts
       for (const [name, contract] of Object.entries(contracts)) {
-        output[network.name][name] = contract.address
+        // test name
+        if (checkInclude(name) && !checkExclude(name)) output[network.name][name] = contract.address
       }
     }
   }
