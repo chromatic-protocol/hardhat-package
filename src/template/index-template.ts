@@ -4,9 +4,9 @@ import type { Signer } from '${targetInfo.signerPackage}'
 import type { Provider } from '@ethersproject/providers'
 import type { ${targetInfo.contractClass}, ${targetInfo.factoryClass} } from '${targetInfo.contractPackage}'
 export * from './typechain'
-import * as factoryModule from './typechain'
-import { deployed } from './deployed'
-export { deployed }
+import { factories as factoryModule } from './typechain'
+import { deployedAddress } from './deployedAddress'
+export { deployedAddress }
 
 interface ContractFactoryConnect {
   connect(address: string, signerOrProvider: Signer | Provider): ${targetInfo.contractClass} 
@@ -20,7 +20,7 @@ interface ContractFactoryConnect {
  * @param chainName deployed network name
  */
 export function getDeployedAddress(contractName: string, chainName: string): string {
-  return deployed[chainName][contractName]
+  return deployedAddress[chainName][contractName]
 }
 
 /**
@@ -35,16 +35,20 @@ export function getDeployedContract(contractName: string, chainName: string, sig
   const factoryName = \`$\{contractName\}__factory\`
   let factory: ContractFactoryConnect | undefined = undefined;
   try {
-    if (chainName in factoryModule) {
+    if ('deployed' in factoryModule && chainName in (factoryModule as any)['deployed']) {
+      //@ts-ignore
+      factory = factoryModule['deployed'][chainName][factoryName];
+    }
+    else if (chainName in factoryModule) {
       //@ts-ignore
       factory = factoryModule[chainName][factoryName];
     }
-    if(!factory) {
+    else if(factoryName in factoryModule) {
       //@ts-ignore
       factory = factoryModule[factoryName];
     }
     if (factory) {
-      return factory.connect(address, signerOrProvider);
+      return factory.connect(address, signerOrProvider as any);
     } else {
       return undefined;
     }
@@ -64,7 +68,7 @@ interface Contracts {
  * @param chainName deployed network name
  */
 export function getAllDeployedContracts(chainName: string): Contracts {
-  const contracts = deployed[chainName]
+  const contracts = deployedAddress[chainName]
   let output: Contracts = {}
   for (let name of Object.keys(contracts)) {
     output[name] = getDeployedContract(name, chainName)
@@ -77,7 +81,7 @@ export function getAllDeployedContracts(chainName: string): Contracts {
  * @param chainName deployed network name
  */
 export function getDeployedContractNames(chainName: string): Array<string> {
-  const contracts = deployed[chainName]
+  const contracts = deployedAddress[chainName]
   return Object.keys(contracts)
 }
 
@@ -86,7 +90,7 @@ export function getDeployedContractNames(chainName: string): Array<string> {
  * @param chainName deployed network name
  */
 export function getChainNames(): Array<string> {
-  return Object.keys(deployed)
+  return Object.keys(deployedAddress)
 }
 `
 }

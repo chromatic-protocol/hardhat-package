@@ -2,9 +2,9 @@ import fs from 'fs'
 import type { HardhatRuntimeEnvironment } from 'hardhat/types'
 import path from 'path'
 import 'solidity-docgen'
-import { normalizePath } from './utils'
+import { normalizePath } from '../common'
 
-export async function generateReadme(hre: HardhatRuntimeEnvironment) {
+export async function genReadme(hre: HardhatRuntimeEnvironment) {
   const { config } = hre
   // keep orginal setting
   const orgConfig = config.docgen
@@ -23,15 +23,15 @@ export async function generateReadme(hre: HardhatRuntimeEnvironment) {
   config.docgen = orgConfig
 }
 
-function getDocgenConfig(filesToProcess) {
-  return {
-    root: process.cwd(),
-    sourcesDir: 'contracts',
-    outputDir: 'docs',
-    pages: 'single',
-    exclude: [],
-    theme: 'markdown',
-    collapseNewlines: true,
-    pageExtension: '.md'
-  }
-}
+// function getDocgenConfig(filesToProcess) {
+//   return {
+//     root: process.cwd(),
+//     sourcesDir: 'contracts',
+//     outputDir: 'docs',
+//     pages: 'single',
+//     exclude: [],
+//     theme: 'markdown',
+//     collapseNewlines: true,
+//     pageExtension: '.md'
+//   }
+// }
