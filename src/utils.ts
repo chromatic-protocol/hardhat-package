@@ -24,7 +24,7 @@ export function defaultIncludeDeployed(config: HardhatConfig): boolean {
 
 export function getDeployedFiltered(hre: HardhatRuntimeEnvironment) {
   const deploymentPath = hre.config.paths.deployments
-  let includes = hre.config.package.includesFromDeployed || ['*']
+  let includes = hre.config.package.includesFromDeployed || ['**/*']
   let excludes = hre.config.package.excludesFromDeployed || []
 
   const checkInclude = (name) => includes.map((x) => minimatch.filter(x)).some((f) => f(name))

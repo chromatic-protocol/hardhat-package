@@ -1,13 +1,13 @@
 export interface TypechainPackageConfig {
-  outDir?: string
-  packageJson?: string
-  outputTarget?: string
-  includeDeployed?: boolean
-  artifactFromDeployment?: boolean
+  outDir?: string  // packaged destination folder.  default: dist
+  packageJson?: string  // custom package.json file to bundle with 
+  outputTarget?: string  // 'typechain' | 'address' packaging target option
+  includeDeployed?: boolean  // include deployed address or not
+  artifactFromDeployment?: boolean // use artifacts from deployments
   // tsconfigJson?: string // not implemented yet
-  buildDir?: string // generating typechin types to this folder
-  includes?: Array<string> // contract name pattern to include
-  excludes?: Array<string> // contract name pattern to exclude
+  buildDir?: string // building intermediate path
+  includes?: Array<string> // glob pattern of contract abi path to include
+  excludes?: Array<string> // glob pattern of contract abi path to exclude
   includesFromDeployed?: Array<string> // contract name pattern to exclude from deployed
   excludesFromDeployed?: Array<string> // contract name pattern to exclude from deployed
   docgen?: any  // config of solidity-docgen

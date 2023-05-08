@@ -6,6 +6,6 @@ interface DeployedAddress {
     }    
 }
 
-export const deployed: DeployedAddress = ${JSON.stringify(deployedJson, null, 2)} 
+export const deployedAddress: DeployedAddress = ${JSON.stringify(deployedJson, null, 2)} 
 `
 }

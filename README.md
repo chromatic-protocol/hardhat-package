@@ -176,15 +176,5 @@ const chainNames = getChainNames()
 
 ## hardhat packaging options
 
-```ts
-interface TypechainPackageConfig {
-  outDir?: string // packaged destination folder.  default: dist,  
-  packageJson?: string // package.json file to bundle with 
-  outputTarget?: string // 'typechain' | 'address' packaging target option
-  includeDeployed?: boolean // include deployed address or not
-  // tsconfigJson?: string // not implemented yet
-  buildDir?: string // generating typechine types to this folder
-  includes?: Array<string> // glob pattern of contract name/folder to include e
-  excludes?: Array<string> // glob pattern of contract name/folder to exclude. ex) ['@openzepplin/**/*', '**/mock/*']
-}
-```
+
+[src/types.ts](src/types.ts)

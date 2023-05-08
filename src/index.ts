@@ -3,14 +3,15 @@ import { extendConfig, subtask, task, types } from 'hardhat/config'
 import { HardhatPluginError } from 'hardhat/plugins'
 import type { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { HardhatConfig, HardhatUserConfig, TaskArguments } from 'hardhat/types'
-import { glob, runTypeChain } from 'typechain'
 import { defaultIncludeDeployed, getDeployedContractNames, getDeployedFiltered } from './utils'
 export { getDeployedFiltered }
 
 import pkgDefault from './config/package.dist.json'
 import tsCjs from './config/tsconfig.cjs.json'
 import tsEsm from './config/tsconfig.esm.json'
-import { generateReadme } from './impl/generateReadme'
+import { exportArtifacts, exportArtifactsFromDeployments } from './exportArtifact'
+import { genReadme } from './genReadme'
+import { genTypeChain } from './genTypeChain'
 import { getIndexAddressSource } from './template/address-template'
 import { getDeployedSource } from './template/deployed-template'
 import { getIndexSource } from './template/index-template'
@@ -19,7 +20,7 @@ import chalk from 'chalk'
 import fs from 'fs'
 import path from 'path'
 
-import { normalizePath } from './impl/utils'
+import { mkdirEmpty, normalizePath } from './common'
 // This import is needed to let the TypeScript compiler know that it should include your type
 // extensions in your npm package's types file.
 import {
@@ -105,108 +106,36 @@ subtask(TASK_PACKAGE_ADDRESS, 'package deployed addresses only')
     await packageCommon({ outputTarget, build }, hre)
   })
 
-async function generateTypechain(config: HardhatConfig) {
-  const cwd = config.paths.root
-  const typechainCfg = config.typechain as any // TypechainConfig
-
-  const allFiles = glob(cwd, [
-    config.package.artifactFromDeployment
-      ? `${config.paths.deployments}/**/!(solcInputs)/**/+([a-zA-Z0-9_]).json`
-      : `${config.paths.artifacts}/!(build-info)/**/+([a-zA-Z0-9_]).json`
-  ])
-
-  // temporarily fixing: runTypeChain cannot resolve package?
-  const targetPath =
-    typechainCfg.target && typechainCfg.target.startsWith('@')
-      ? `./node_modules/${typechainCfg.target}`
-      : undefined
-
-  const typechainOptions = {
-    cwd,
-    // allFiles,
-    inputDir: config.package.artifactFromDeployment
-      ? config.paths.deployments
-      : config.paths.artifacts,
-    outDir: config.package.buildDir,
-    target: targetPath || typechainCfg.target,
-    flags: {
-      alwaysGenerateOverloads: typechainCfg.alwaysGenerateOverloads,
-      discriminateTypes: typechainCfg.discriminateTypes,
-      tsNocheck: typechainCfg.tsNocheck,
-      environment: undefined //'hardhat'
-    }
-  }
-
-  // filesToProcess
-  let filesToProcess = [...allFiles] // let default
-  if (config.package.includes) {
-    const includes = config.package.includes.map((x) =>
-      config.package.artifactFromDeployment
-        ? `${config.paths.deployments}/!(solcInputs)/**/${x}.json`
-        : `${config.paths.artifacts}/!(build-info)/**/${x}.json`
-    )
-    let includeFiles = glob(cwd, includes)
-    filesToProcess = filesToProcess.filter((x) => includeFiles.includes(x))
-  }
-  if (config.package.excludes) {
-    // glob pattern can include folder pattern
-    // ex) ['@openzepplin/**/*']
-    let excludes = config.package.excludes.map((x) =>
-      config.package.artifactFromDeployment
-        ? `${config.paths.deployments}/${x}.json`
-        : `${config.paths.artifacts}/${x}.json`
-    )
-    let excludeFiles = glob(cwd, excludes)
-    filesToProcess = filesToProcess.filter((x) => !excludeFiles.includes(x))
-
-    // glob pattern can include contract name pattern
-    // ex) ['Mock**']
-    excludes = config.package.excludes.map((x) =>
-      config.package.artifactFromDeployment
-        ? `${config.paths.deployments}/**/${x}.json`
-        : `${config.paths.artifacts}/**/${x}.json`
-    )
-    excludeFiles = glob(cwd, excludes)
-    filesToProcess = filesToProcess.filter((x) => !excludeFiles.includes(x))
-  }
-  console.log(chalk.yellow('filesToProcess', JSON.stringify(filesToProcess, null, 2)))
-
-  // remove if exist
-  let buildPath = normalizePath(config.paths.root, config.package.buildDir)
-  if (fs.existsSync(buildPath)) {
-    console.log(chalk.yellow(`removing existing packaging-build folder ${config.package.buildDir}`))
-    fs.rmSync(buildPath, { recursive: true, force: true })
-  }
-
-  const result = await runTypeChain({
-    ...typechainOptions,
-    allFiles: filesToProcess,
-    filesToProcess: filesToProcess
-  })
-}
-
 async function packageCommon(
   { outputTarget, build }: TaskArguments,
   hre: HardhatRuntimeEnvironment
 ) {
   const { config } = hre
+
+  console.log(chalk.yellow(`✨ Clean buildDir and outDir`))
   let outDir = normalizePath(config.paths.root, config.package.outDir)
-  if (fs.existsSync(outDir)) {
-    console.log(chalk.yellow(`removing existing output folder ${config.package.outDir}`))
-    fs.rmSync(outDir, { recursive: true, force: true })
-  }
-  fs.mkdirSync(outDir)
+  mkdirEmpty(outDir)
+
+  // clean up builddir
+  let buildPath = normalizePath(config.paths.root, config.package.buildDir)
+  mkdirEmpty(buildPath)
 
   try {
     // add helper function and deployed address
+    console.log(chalk.green(`✨ Export artifacts from deployments`))
+    await exportArtifactsFromDeployments(hre)
+    // add helper function and deployed address
+    console.log(chalk.green(`✨ Export extended artifacts`))
+    await exportArtifacts(hre)
+
     await buildCode(hre, outputTarget, build)
   } catch (e) {
     throw new HardhatPluginError(PLUGIN_NAME, e.message)
   }
-  console.log(chalk.green('generating README'))
-  await generateReadme(hre)
+  console.log(chalk.green('✨ generating README'))
+  await genReadme(hre)
 
-  console.log(chalk.green('writing package.json'))
+  console.log(chalk.green('✨ writing package.json'))
   writePackageJson(config)
 
   // show publish command message
@@ -227,13 +156,10 @@ async function buildCode(
 
   const { config } = hre
 
-  let typechainOutDir = config.package.buildDir
-  console.info('typechain outDir:', typechainOutDir)
+  const typechainPath = normalizePath(config.paths.root, config.package.buildDir, 'src.ts')
+  console.log(chalk.green(`✨ generating typechain in ${typechainPath}`))
+  await genTypeChain(config)
 
-  console.log(chalk.green(`generating typechain to ${typechainOutDir}`))
-  await generateTypechain(config)
-
-  const typechainPath = normalizePath(config.paths.root, typechainOutDir)
   if (!fs.existsSync(typechainPath)) {
     console.error(chalk.red('Error: check typechain folder setup or compile first'))
     console.error(chalk.red('ex) hardhat clean && hardhat compile'))
@@ -272,11 +198,11 @@ async function buildCode(
     fs.cpSync(typechainPath, srcDir, { recursive: true })
 
     // tsc esm
-    console.log('building esm output...')
+    console.log('✨ building esm output...')
     buildTypeChain(getTsconfig('esm', config), srcDir, build)
 
     // tsc cjs
-    console.log('building cjs output...')
+    console.log('✨ building cjs output...')
     buildTypeChain(getTsconfig('cjs', config), srcDir, build)
 
     console.log(chalk.green('✨ tsc compiled package'))
@@ -422,7 +348,7 @@ subtask(TASK_PACKAGE_GET_DEPLOYED_ADDRESS, 'show deployed addresses').setAction(
   }
 )
 
-subtask(TASK_PACKAGE_WRITE_DEPLOYED, 'write deployed.ts')
+subtask(TASK_PACKAGE_WRITE_DEPLOYED, 'write deployedAddress.ts')
   .addOptionalPositionalParam(
     'outputPath',
     'packaging output path or filena',
@@ -438,7 +364,7 @@ subtask(TASK_PACKAGE_WRITE_DEPLOYED, 'write deployed.ts')
       console.log(chalk.green('deployed:'), deployed)
       console.log('writing deployed addresses')
       const source = getDeployedSource(deployed)
-      fs.writeFileSync(path.join(outputPath, 'deployed.ts'), source)
+      fs.writeFileSync(path.join(outputPath, 'deployedAddress.ts'), source)
     } catch (e) {
       throw new HardhatPluginError(PLUGIN_NAME, e.message)
     }
