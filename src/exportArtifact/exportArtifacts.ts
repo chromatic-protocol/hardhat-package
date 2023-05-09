@@ -1,10 +1,20 @@
 import fs from 'fs'
-import type { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { Artifact, BuildInfo, HardhatConfig } from 'hardhat/types'
+import type {
+  Artifact,
+  BuildInfo,
+  CompilerInput,
+  HardhatConfig,
+  HardhatRuntimeEnvironment
+} from 'hardhat/types'
+import murmur128 from 'murmur-128'
 import path from 'path'
 import { filterPaths, normalizePath, readJSON } from '../common'
 
-export async function exportArtifacts(hre: HardhatRuntimeEnvironment) {
+export interface SolcInputHashMap {
+  [fullyQualifiedName: string]: string
+}
+
+export async function exportArtifacts(hre: HardhatRuntimeEnvironment): Promise<SolcInputHashMap> {
   const config: HardhatConfig = hre.config
   const artifactPaths = await hre.artifacts.getArtifactPaths()
 
@@ -20,8 +30,9 @@ export async function exportArtifacts(hre: HardhatRuntimeEnvironment) {
     config.package.includes,
     config.package.excludes
   )
-
+  console.log('filtered artifact paths from artifacts:', filteredArtifactPaths)
   const artifactsDir = config.paths.artifacts
+  const solcInputHashMap: SolcInputHashMap = {}
 
   for (const artifactPath of filteredArtifactPaths) {
     const artifact: Artifact = readJSON(artifactPath)
@@ -32,12 +43,16 @@ export async function exportArtifacts(hre: HardhatRuntimeEnvironment) {
     const buildInfo: BuildInfo = readJSON(buildinfoPath)
 
     const output = buildInfo.output.contracts[artifact.sourceName][artifactName]
-
+    const solcInputHash = makeSolcInputHash(buildInfo.input)
     const extendedArtifact = {
       ...artifact,
+      solcInputHash,
       userdoc: (output as any).userdoc,
       devdoc: (output as any).devdoc
     }
+
+    const fullyQualifiedName = `${artifact.sourceName}:${artifact.contractName}`
+    solcInputHashMap[fullyQualifiedName] = solcInputHash
 
     // follow original path structure
     const pathToSave = path
@@ -52,4 +67,10 @@ export async function exportArtifacts(hre: HardhatRuntimeEnvironment) {
     console.log(`write to ${jsonPath}`)
     fs.writeFileSync(jsonPath, JSON.stringify(extendedArtifact, null, '  '))
   }
+  return solcInputHashMap
+}
+
+function makeSolcInputHash(buildInfoInput: CompilerInput) {
+  const solcInput = JSON.stringify(buildInfoInput, null, '  ')
+  return Buffer.from(murmur128(solcInput)).toString('hex')
 }

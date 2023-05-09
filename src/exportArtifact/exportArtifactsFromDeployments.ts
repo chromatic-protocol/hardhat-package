@@ -2,15 +2,20 @@ import fs from 'fs'
 import type { HardhatConfig, HardhatRuntimeEnvironment } from 'hardhat/types'
 import path from 'path'
 import { glob } from 'typechain'
-import { filterPaths, mkdirEmpty, normalizePath } from '../common'
+import { filterPaths, normalizePath } from '../common'
+import { readJSON } from '../common/index'
+import type { SolcInputHashMap } from './exportArtifacts'
 
 /// export artifacts from deployments filered
-export async function exportArtifactsFromDeployments(hre: HardhatRuntimeEnvironment) {
+export async function exportArtifactsFromDeployments(
+  hre: HardhatRuntimeEnvironment,
+  solcInputHashMap: SolcInputHashMap
+): Promise<boolean> {
   const config: HardhatConfig = hre.config
 
   if (!config?.package?.artifactFromDeployment) {
     console.log(`will not export artifactfs from deployments`)
-    return
+    return false
   }
 
   const allArtifacts = glob(hre.config.paths.root, [
@@ -32,16 +37,30 @@ export async function exportArtifactsFromDeployments(hre: HardhatRuntimeEnvironm
     'extend-artifacts',
     'deployed'
   )
-
-  mkdirEmpty(extendedArtifactFolderpath)
-
+  let anyExported = false
   for (const artifactPath of filteredArtifactPaths) {
+    const artifact = readJSON(artifactPath)
+    const metadata = JSON.parse(artifact.metadata)
+    const compilationTarget = metadata.settings?.compilationTarget
+    if (compilationTarget) {
+      const sourceName = Object.keys(compilationTarget)[0]
+      const contractName = compilationTarget[sourceName]
+      const fullyQualifiedName = `${sourceName}:${contractName}`
+
+      if (solcInputHashMap[fullyQualifiedName] === artifact.solcInputHash) {
+        console.log(`skip to export the duplicate abi from deployments [${artifactPath}]`)
+        continue
+      }
+    }
     const jsonPath = artifactPath.replace(hre.config.paths.deployments, extendedArtifactFolderpath)
     const dir = path.dirname(jsonPath)
+
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true })
     }
 
     fs.writeFileSync(jsonPath, fs.readFileSync(artifactPath))
+    anyExported = true
   }
+  return anyExported
 }
