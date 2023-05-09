@@ -10,6 +10,7 @@ import pkgDefault from './config/package.dist.json'
 import tsCjs from './config/tsconfig.cjs.json'
 import tsEsm from './config/tsconfig.esm.json'
 import { exportArtifacts, exportArtifactsFromDeployments } from './exportArtifact'
+import type { SolcInputHashMap } from './exportArtifact'
 import { genReadme } from './genReadme'
 import { genTypeChain } from './genTypeChain'
 import { getIndexAddressSource } from './template/address-template'
@@ -121,12 +122,12 @@ async function packageCommon(
   mkdirEmpty(buildPath)
 
   try {
-    // add helper function and deployed address
-    console.log(chalk.green(`✨ Export artifacts from deployments`))
-    await exportArtifactsFromDeployments(hre)
-    // add helper function and deployed address
+
     console.log(chalk.green(`✨ Export extended artifacts`))
-    await exportArtifacts(hre)
+    const solcInputHashMap: SolcInputHashMap = await exportArtifacts(hre)
+
+    console.log(chalk.green(`✨ Export artifacts from deployments`))
+    await exportArtifactsFromDeployments(hre, solcInputHashMap)
 
     await buildCode(hre, outputTarget, build)
   } catch (e) {
