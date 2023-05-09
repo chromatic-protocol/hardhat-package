@@ -2,7 +2,7 @@ export function getIndexSource(targetInfo) {
   return `
 import type { Signer } from '${targetInfo.signerPackage}'
 import type { Provider } from '@ethersproject/providers'
-import type { ${targetInfo.contractClass}, ${targetInfo.factoryClass} } from '${targetInfo.contractPackage}'
+import type { ${targetInfo.contractClass} } from '${targetInfo.contractPackage}'
 export * from './typechain'
 import { factories as factoryModule } from './typechain'
 import { deployedAddress } from './deployedAddress'
