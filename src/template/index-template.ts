@@ -1,15 +1,21 @@
+import Handlebars from 'handlebars'
+
 export function getIndexSource(targetInfo) {
-  return `
-import type { Signer } from '${targetInfo.signerPackage}'
+  const template = Handlebars.compile(INDEX_SOURCE)
+  return template(targetInfo)
+}
+
+const INDEX_SOURCE = `
+import type { Signer } from '{{signerPackage}}'
 import type { Provider } from '@ethersproject/providers'
-import type { ${targetInfo.contractClass} } from '${targetInfo.contractPackage}'
+import type { {{contractClass}} } from '{{contractPackage}}'
 export * from './typechain'
 import { factories as factoryModule } from './typechain'
 import { deployedAddress } from './deployedAddress'
 export { deployedAddress }
 
 interface ContractFactoryConnect {
-  connect(address: string, signerOrProvider: Signer | Provider): ${targetInfo.contractClass} 
+  connect(address: string, signerOrProvider: Signer | Provider): {{contractClass}} 
 }
 
 /**
@@ -35,6 +41,7 @@ export function getDeployedContract(contractName: string, chainName: string, sig
   const factoryName = \`$\{contractName\}__factory\`
   let factory: ContractFactoryConnect | undefined = undefined;
   try {
+    {{#if anyExportedFromDeployments}}
     if ('deployed' in factoryModule && chainName in (factoryModule as any)['deployed']) {
       //@ts-ignore
       factory = factoryModule['deployed'][chainName][factoryName];
@@ -47,6 +54,12 @@ export function getDeployedContract(contractName: string, chainName: string, sig
       //@ts-ignore
       factory = factoryModule[factoryName];
     }
+    {{else}}
+    if(factoryName in factoryModule) {
+      //@ts-ignore
+      factory = factoryModule[factoryName];
+    }
+    {{/if}}
     if (factory) {
       return factory.connect(address, signerOrProvider as any);
     } else {
@@ -93,4 +106,3 @@ export function getChainNames(): Array<string> {
   return Object.keys(deployedAddress)
 }
 `
-}

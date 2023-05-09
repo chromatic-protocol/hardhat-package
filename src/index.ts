@@ -9,8 +9,8 @@ export { getDeployedFiltered }
 import pkgDefault from './config/package.dist.json'
 import tsCjs from './config/tsconfig.cjs.json'
 import tsEsm from './config/tsconfig.esm.json'
-import { exportArtifacts, exportArtifactsFromDeployments } from './exportArtifact'
 import type { SolcInputHashMap } from './exportArtifact'
+import { exportArtifacts, exportArtifactsFromDeployments } from './exportArtifact'
 import { genReadme } from './genReadme'
 import { genTypeChain } from './genTypeChain'
 import { getIndexAddressSource } from './template/address-template'
@@ -122,14 +122,13 @@ async function packageCommon(
   mkdirEmpty(buildPath)
 
   try {
-
     console.log(chalk.green(`✨ Export extended artifacts`))
     const solcInputHashMap: SolcInputHashMap = await exportArtifacts(hre)
 
     console.log(chalk.green(`✨ Export artifacts from deployments`))
-    await exportArtifactsFromDeployments(hre, solcInputHashMap)
+    const anyExportedFromDeployments = await exportArtifactsFromDeployments(hre, solcInputHashMap)
 
-    await buildCode(hre, outputTarget, build)
+    await buildCode(hre, outputTarget, build, anyExportedFromDeployments)
   } catch (e) {
     throw new HardhatPluginError(PLUGIN_NAME, e.message)
   }
@@ -147,7 +146,8 @@ async function packageCommon(
 async function buildCode(
   hre: HardhatRuntimeEnvironment,
   outputTarget: string,
-  build: boolean = true
+  build: boolean = true,
+  anyExportedFromDeployments
 ) {
   // mv index.ts typechain.ts
   // add helper index.ts
@@ -191,7 +191,7 @@ async function buildCode(
     if (config.package.includeDeployed || outputTarget === 'address') {
       // write index.ts
       console.log('setting new "index.ts"')
-      buildIndexSource(hre, outputTarget, typechainPath)
+      buildIndexSource(hre, outputTarget, typechainPath, anyExportedFromDeployments)
     }
     // cp src.ts
     let outDir = normalizePath(config.paths.root, config.package.outDir)
@@ -309,12 +309,13 @@ function writePackageJson(config: HardhatConfig) {
 async function buildIndexSource(
   hre: HardhatRuntimeEnvironment,
   targetOutput: string,
-  typechainPath: string
+  typechainPath: string,
+  anyExportedFromDeployments: boolean
 ) {
   // and format type of Contract[Factory]
   if (targetOutput === 'typechain' && hre.config.package?.includeDeployed) {
     let targetInfo = getTargetInfo(hre)
-    const source = getIndexSource(targetInfo)
+    const source = getIndexSource({ ...targetInfo, anyExportedFromDeployments })
     fs.writeFileSync(path.join(typechainPath, 'index.ts'), source)
   } else if (targetOutput === 'address') {
     const source = getIndexAddressSource()
