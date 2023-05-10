@@ -10,7 +10,7 @@ import type { Signer } from '{{signerPackage}}'
 import type { Provider } from '@ethersproject/providers'
 import type { {{contractClass}} } from '{{contractPackage}}'
 export * from './typechain'
-import { factories as factoryModule } from './typechain'
+import * as factoryModule from './typechain'
 import { deployedAddress } from './deployedAddress'
 export { deployedAddress }
 
@@ -42,23 +42,20 @@ export function getDeployedContract(contractName: string, chainName: string, sig
   let factory: ContractFactoryConnect | undefined = undefined;
   try {
     {{#if anyExportedFromDeployments}}
-    if ('deployed' in factoryModule && chainName in (factoryModule as any)['deployed']) {
-      //@ts-ignore
-      factory = factoryModule['deployed'][chainName][factoryName];
+    
+    factory = factoryModule?.factories?.deployed?.[chainName]?.[factoryName]
+
+    if (!factory) {
+      factory = factoryModule?.[chainName]?.[factoryName]
     }
-    else if (chainName in factoryModule) {
-      //@ts-ignore
-      factory = factoryModule[chainName][factoryName];
+    if (!factory) {
+      factory = factoryModule?.[factoryName]
     }
-    else if(factoryName in factoryModule) {
-      //@ts-ignore
-      factory = factoryModule[factoryName];
-    }
+    
     {{else}}
-    if(factoryName in factoryModule) {
-      //@ts-ignore
-      factory = factoryModule[factoryName];
-    }
+
+    factory = factoryModule?.[factoryName]
+    
     {{/if}}
     if (factory) {
       return factory.connect(address, signerOrProvider as any);
