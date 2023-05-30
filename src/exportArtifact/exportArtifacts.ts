@@ -36,6 +36,10 @@ export async function exportArtifacts(hre: HardhatRuntimeEnvironment): Promise<S
 
   for (const artifactPath of filteredArtifactPaths) {
     const artifact: Artifact = readJSON(artifactPath)
+    if (config.package.excludeBytecode) {
+      delete artifact['bytecode']
+      delete artifact['deployedBytecode']
+    }
     const artifactName = path.basename(artifactPath, '.json')
     const artifactDBGPath = path.join(path.dirname(artifactPath), artifactName + '.dbg.json')
     const artifactDBG = readJSON(artifactDBGPath)
