@@ -1,4 +1,4 @@
-# :package: @chromatic-finance/hardhat-package
+# :package: @chromatic-protocol/hardhat-package
 
 You can easily pack and publish a hardhat project to interact deployed contracts.
 
@@ -6,26 +6,26 @@ You can easily pack and publish a hardhat project to interact deployed contracts
 a nice cocktail :cocktail: of `hardhat + typechain + hardhat-deploy + hardhat-ethers` :smile:
 - compile contracts with `@typechain/ethers-v5`
 - deploy with `hardhat-deploy`
-- pack by this `@chromatic-finance/hardhat-package`
+- pack by this `@chromatic-protocol/hardhat-package`
 - finally publish your interfaces as a package.
 - and use this in any other related projects for example a web front-end project etc 
 
 ## Installation
 
 ```bash
-npm install @chromatic-finance/hardhat-package
+npm install @chromatic-protocol/hardhat-package
 ```
 
 Import the plugin in your `hardhat.config.js`:
 
 ```js
-require("@chromatic-finance/hardhat-package")
+require("@chromatic-protocol/hardhat-package")
 ```
 
 Or if you are using TypeScript, in your `hardhat.config.ts`:
 
 ```ts
-import "@chromatic-finance/hardhat-package"
+import "@chromatic-protocol/hardhat-package"
 ```
 
 ## Required plugins
@@ -68,7 +68,7 @@ import '@nomiclabs/hardhat-ethers'
 import '@typechain/hardhat'
 import 'hardhat-deploy'
 
-import '@chromatic-finance/hardhat-package'
+import '@chromatic-protocol/hardhat-package'
 
 const config: HardhatUserConfig = {
   solidity: '0.8.17',
