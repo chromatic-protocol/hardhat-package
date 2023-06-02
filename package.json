@@ -1,5 +1,5 @@
 {
-  "name": "@chromatic-finance/hardhat-package",
+  "name": "@chromatic-protocol/hardhat-package",
   "version": "0.0.1-dev.12",
   "description": "",
   "main": "dist/src/index.js",
