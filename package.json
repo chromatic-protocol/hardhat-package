@@ -1,6 +1,6 @@
 {
   "name": "@chromatic-protocol/hardhat-package",
-  "version": "0.0.1-dev.12",
+  "version": "0.0.1-dev.13",
   "description": "",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
