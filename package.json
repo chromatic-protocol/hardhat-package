@@ -14,14 +14,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/chromatic-finance/hardhat-package.git"
+    "url": "git+https://github.com/chromatic-protocol/hardhat-package.git"
   },
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/chromatic-finance/hardhat-package/issues"
+    "url": "https://github.com/chromatic-protocol/hardhat-package/issues"
   },
-  "homepage": "https://github.com/chromatic-finance/hardhat-package#readme",
+  "homepage": "https://github.com/chromatic-protocol/hardhat-package#readme",
   "files": [
     "dist/src/",
     "src/",
