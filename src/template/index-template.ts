@@ -10,6 +10,8 @@ import type { Signer } from '{{signerPackage}}'
 import type { Provider } from '@ethersproject/providers'
 import type { {{contractClass}} } from '{{contractPackage}}'
 export * from './typechain'
+export type * from './typechain'
+
 import * as factoryModule from './typechain'
 import { deployedAddress } from './deployedAddress'
 export { deployedAddress }
