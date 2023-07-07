@@ -4,7 +4,7 @@ You can easily pack and publish a hardhat project to interact deployed contracts
 
 ## What
 a nice cocktail :cocktail: of `hardhat + typechain + hardhat-deploy + hardhat-ethers` :smile:
-- compile contracts with `@typechain/ethers-v5`
+- compile contracts with `@typechain/ethers-v6`
 - deploy with `hardhat-deploy`
 - pack by this `@chromatic-protocol/hardhat-package`
 - finally publish your interfaces as a package.
@@ -30,9 +30,9 @@ import "@chromatic-protocol/hardhat-package"
 
 ## Required plugins
 
-- `@nomiclabs/hardhat-ethers` 
+- `@nomicfoundation/hardhat-ethers` 
 - `@typechain/hardhat`
-- `@typechain/ethers-v5` : supporting typechain targets 
+- `@typechain/ethers-v6` : supporting typechain targets 
 - `hardhat-deploy`
 
 ## Tasks
@@ -63,7 +63,7 @@ config = {
 ### configure your hardhat.config
 ```ts
 import { HardhatUserConfig } from 'hardhat/types'
-import '@nomiclabs/hardhat-ethers'
+import '@nomicfoundation/hardhat-ethers'
 
 import '@typechain/hardhat'
 import 'hardhat-deploy'

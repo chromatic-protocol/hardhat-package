@@ -1,7 +1,9 @@
+import chalk from 'chalk'
 import { HardhatConfig } from 'hardhat/types'
 import path from 'path'
 import { Config as TypeChainConfig, glob, runTypeChain } from 'typechain'
 import { normalizePath } from '../common'
+
 // hardhat config : source from @typechain/hardhat
 interface TypechainConfig {
   outDir: string
@@ -30,7 +32,7 @@ export function getTypeChainConfig(config: HardhatConfig, artifactPath: string):
 
     inputDir: artifactPath,
     outDir: path.join(config.package.buildDir, 'src.ts'),
-    target: targetPath || typechainCfg.target,
+    target: targetPath || config.package.typechainTarget || typechainCfg.target,
     flags: {
       alwaysGenerateOverloads: typechainCfg?.alwaysGenerateOverloads,
       discriminateTypes: typechainCfg?.discriminateTypes,
@@ -38,6 +40,7 @@ export function getTypeChainConfig(config: HardhatConfig, artifactPath: string):
       environment: undefined //'hardhat'
     }
   }
+  console.log(chalk.green(`typechain target: ${typechainOptions.target}`))
   return typechainOptions
 }
 
