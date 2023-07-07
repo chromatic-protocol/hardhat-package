@@ -142,9 +142,6 @@ async function packageCommon(
   console.log(chalk.green('✨ generating README'))
   await genReadme(hre)
 
-  console.log(chalk.green('✨ writing package.json'))
-  writePackageJson(outDir, pkgJson)
-
   // show publish command message
   console.log(chalk.green(`✨ Done packaging`))
   console.log(chalk.green(chalk.bold(`\n cd ${config.package.outDir} && npm publish`)))
