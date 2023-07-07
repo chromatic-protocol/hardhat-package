@@ -33,15 +33,15 @@
     "solidity-docgen": "^0.6.0-beta.35"
   },
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.1.1",
-    "@typechain/ethers-v5": "^10.1.0",
-    "@typechain/hardhat": "^6.1.2",
+    "@nomicfoundation/hardhat-ethers": "^3.0.3",
+    "@typechain/ethers-v6": "^0.4.0",
+    "@typechain/hardhat": "^8.0.0",
     "@types/chai": "^4.3.3",
     "@types/fs-extra": "^9.0.13",
     "@types/mocha": ">=9.1.0",
     "@types/node": "^18.11.9",
     "chai": "^4.3.6",
-    "ethers": "^5.7.1",
+    "ethers": "^6.6.2",
     "hardhat": "^2.10.2",
     "hardhat-deploy": "^0.11.20",
     "mocha": "^10.0.0",
@@ -50,16 +50,13 @@
     "tslint": "^5.20.1",
     "tslint-config-prettier": "^1.18.0",
     "tslint-plugin-prettier": "^2.3.0",
-    "typechain": "^8.1.1",
+    "typechain": "^8.2.0",
     "typescript": "^4.9.3"
   },
   "peerDependencies": {
-    "@ethersproject/abi": "^5.0.0",
-    "@ethersproject/bytes": "^5.0.0",
-    "@ethersproject/providers": "^5.0.0",
-    "ethers": "^5.0.0",
+    "ethers": "^6.0.0",
     "hardhat": "^2.0.0",
     "hardhat-deploy": "^0.11.20",
-    "typechain": "^8.1.1"
+    "typechain": "^8.2.0"
   }
 }

@@ -1,0 +1,14 @@
+{
+  "main": "./cjs/index.js",
+  "module": "./esm/index.js",
+  "types": "./esm/index.d.ts",
+  "exports": {
+    ".": {
+      "node": "./cjs/index.js",
+      "default": "./esm/index.js"
+    }
+  },
+  "peerDependencies": {
+    "ethers": "^6.0.0"
+  }
+}

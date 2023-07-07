@@ -6,7 +6,7 @@ import { HardhatConfig, HardhatUserConfig, TaskArguments } from 'hardhat/types'
 import { defaultIncludeDeployed, getDeployedContractNames, getDeployedFiltered } from './utils'
 export { getDeployedFiltered }
 
-import pkgDefault from './config/package.dist.json'
+import { getPkgDefault } from './config/get-package-default'
 import tsCjs from './config/tsconfig.cjs.json'
 import tsEsm from './config/tsconfig.esm.json'
 import type { SolcInputHashMap } from './exportArtifact'
@@ -55,6 +55,7 @@ extendConfig((config: HardhatConfig, userConfig: Readonly<HardhatUserConfig>) =>
     outDir: 'dist',
     packageJson: 'package.json',
     outputTarget: 'typechain',
+    typechainTarget: config.typechain?.target,
     buildDir: 'package-build'
   }
   packageConfig = { ...defaultConfig, ...packageConfig }
@@ -69,8 +70,10 @@ task(TASK_PACKAGE, 'package contracts')
     types.string
   )
   .addOptionalParam('build', 'build or setup only', true, types.boolean)
-  .setAction(async ({ taskName, build }, hre: HardhatRuntimeEnvironment) => {
+  .addOptionalParam('typechainTarget', 'typechain target', undefined, types.string)
+  .setAction(async ({ taskName, build, typechainTarget }, hre: HardhatRuntimeEnvironment) => {
     const { config } = hre
+    config.package.typechainTarget = typechainTarget ?? (config.typechain.target || 'ethers-v5')
     updatePackageConfig(config)
     if (config.package.includes === undefined) {
       const contractNames = getDeployedContractNames(hre)
@@ -120,13 +123,17 @@ async function packageCommon(
   // clean up builddir
   let buildPath = normalizePath(config.paths.root, config.package.buildDir)
   mkdirEmpty(buildPath)
-
+  let pkgJson = getPackageJson(config)
   try {
     console.log(chalk.green(`✨ Export extended artifacts`))
     const solcInputHashMap: SolcInputHashMap = await exportArtifacts(hre)
 
     console.log(chalk.green(`✨ Export artifacts from deployments`))
     const anyExportedFromDeployments = await exportArtifactsFromDeployments(hre, solcInputHashMap)
+
+    console.log(chalk.green(`✨ Writing package.json`))
+    writePackageJson(normalizePath(config.paths.root, config.package.buildDir), pkgJson)
+    writePackageJson(outDir, pkgJson)
 
     await buildCode(hre, outputTarget, build, anyExportedFromDeployments)
   } catch (e) {
@@ -136,7 +143,7 @@ async function packageCommon(
   await genReadme(hre)
 
   console.log(chalk.green('✨ writing package.json'))
-  writePackageJson(config)
+  writePackageJson(outDir, pkgJson)
 
   // show publish command message
   console.log(chalk.green(`✨ Done packaging`))
@@ -197,6 +204,11 @@ async function buildCode(
     let outDir = normalizePath(config.paths.root, config.package.outDir)
     let srcDir = path.join(outDir, 'src.ts')
     fs.cpSync(typechainPath, srcDir, { recursive: true })
+
+    // install dependencies
+    console.log(`cd ${outDir} && npm install`)
+    let res = exec(`npm install`, { cwd: outDir })
+    console.log(chalk.green(res.toString()))
 
     // tsc esm
     console.log('✨ building esm output...')
@@ -260,7 +272,7 @@ function getTsconfig(moduleType: 'esm' | 'cjs', config: HardhatConfig, clean: bo
   return tsconfig
 }
 
-function writePackageJson(config: HardhatConfig) {
+function getPackageJson(config: HardhatConfig) {
   // prepare package.json and copy
   // remove dependencies
   let pkg: object
@@ -270,7 +282,10 @@ function writePackageJson(config: HardhatConfig) {
   if (fs.existsSync(packagePath)) {
     const hardhatPackage = JSON.parse(fs.readFileSync(packagePath, 'utf8'))
     console.log('extracting package information')
+    const pkgDefault = getPkgDefault(config)
+    console.log('hardhatconfig:', config)
 
+    console.log('pkgDefault:', pkgDefault)
     pkg = {
       name: hardhatPackage['name'],
       version: hardhatPackage['version'],
@@ -284,7 +299,7 @@ function writePackageJson(config: HardhatConfig) {
     }
     console.log(chalk.green(`extracted package information:, ${JSON.stringify(pkg, null, 2)}`))
     // pkgDefault['peerDependencies'] = pkg['peerDependencies'] || pkgDefault['peerDependencies']
-    pkg = { ...pkg, ...pkgDefault, ...pkg }
+    pkg = { ...pkg, ...pkgDefault }
   } else {
     throw new HardhatPluginError(PLUGIN_NAME, 'package.json not found')
   }
@@ -299,11 +314,12 @@ function writePackageJson(config: HardhatConfig) {
       throw new HardhatPluginError(PLUGIN_NAME, 'packageConfig.packageJson not found')
     }
   }
+  return pkg
+}
 
-  let outDir = normalizePath(config.paths.root, config.package.outDir)
-
+function writePackageJson(dir, pkg) {
   // write package.json
-  fs.writeFileSync(path.join(outDir, 'package.json'), JSON.stringify(pkg, null, 2))
+  fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify(pkg, null, 2))
 }
 
 async function buildIndexSource(
@@ -328,12 +344,19 @@ function getTargetInfo(hre: HardhatRuntimeEnvironment) {
   // getDefaultTypechainConfig
   const { config } = hre
 
-  const target = config.typechain.target
+  const target = config.package.typechainTarget ?? config.typechain.target
   console.log('hardhat-package: target', target)
   if (target === 'ethers-v5') {
     return {
+      target: target,
       signerPackage: '@ethersproject/abstract-signer',
       contractPackage: '@ethersproject/contracts',
+      contractClass: 'BaseContract',
+      factoryClass: 'ContractFactory'
+    }
+  } else if (target === 'ethers-v6') {
+    return {
+      target: target,
       contractClass: 'BaseContract',
       factoryClass: 'ContractFactory'
     }
