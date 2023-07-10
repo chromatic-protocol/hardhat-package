@@ -70,32 +70,68 @@ task(TASK_PACKAGE, 'package contracts')
     types.string
   )
   .addOptionalParam('build', 'build or setup only', true, types.boolean)
+  .addOptionalParam('outDir', 'packaged destination folder', undefined, types.string)
+  .addOptionalParam(
+    'packageJson',
+    'custom package.json file to bundle with',
+    undefined,
+    types.string
+  )
   .addOptionalParam('typechainTarget', 'typechain target', undefined, types.string)
-  .setAction(async ({ taskName, build, typechainTarget }, hre: HardhatRuntimeEnvironment) => {
-    const { config } = hre
-    config.package.typechainTarget = typechainTarget ?? (config.typechain.target || 'ethers-v5')
-    updatePackageConfig(config)
-    if (config.package.includes === undefined) {
-      const contractNames = getDeployedContractNames(hre)
-      if (contractNames.length > 0) {
-        config.package.includes = contractNames
+  .addOptionalParam('includeDeployed', 'include deployed address or not', undefined, types.boolean)
+  .addOptionalParam('buildDir', 'building intermediate path', undefined, types.string)
+  .addOptionalParam(
+    'excludeBytecode',
+    'exclude bytecode in artifacts and generate code',
+    undefined,
+    types.boolean
+  )
+  .setAction(
+    async (
+      {
+        taskName,
+        build,
+        outDir,
+        packageJson,
+        typechainTarget,
+        includeDeployed,
+        buildDir,
+        excludeBytecode
+      },
+      hre: HardhatRuntimeEnvironment
+    ) => {
+      const { config } = hre
+      config.package.outDir = outDir ?? config.package.outDir
+      config.package.packageJson = packageJson ?? config.package.packageJson
+      config.package.typechainTarget = typechainTarget ?? (config.typechain.target || 'ethers-v5')
+      config.package.includeDeployed =
+        includeDeployed !== undefined ? includeDeployed : config.package.includeDeployed
+      config.package.buildDir = buildDir ?? config.package.buildDir
+      config.package.excludeBytecode =
+        excludeBytecode !== undefined ? excludeBytecode : config.package.excludeBytecode
+      updatePackageConfig(config)
+      if (config.package.includes === undefined) {
+        const contractNames = getDeployedContractNames(hre)
+        if (contractNames.length > 0) {
+          config.package.includes = contractNames
+        }
+      }
+      if (taskName === 'typechain') {
+        config.package.outputTarget = taskName
+        await hre.run(TASK_PACKAGE_TYPECHAIN, { outputTarget: taskName, build })
+      } else if (taskName === 'address') {
+        config.package.outputTarget = taskName
+        await hre.run(TASK_PACKAGE_ADDRESS, { outputTarget: taskName, build })
+      } else {
+        const subTaskName = `package:${taskName}`
+        try {
+          await hre.run(subTaskName, { taskName, build })
+        } catch (e) {
+          throw new HardhatPluginError(PLUGIN_NAME, e?.message)
+        }
       }
     }
-    if (taskName === 'typechain') {
-      config.package.outputTarget = taskName
-      await hre.run(TASK_PACKAGE_TYPECHAIN, { outputTarget: taskName, build })
-    } else if (taskName === 'address') {
-      config.package.outputTarget = taskName
-      await hre.run(TASK_PACKAGE_ADDRESS, { outputTarget: taskName, build })
-    } else {
-      const subTaskName = `package:${taskName}`
-      try {
-        await hre.run(subTaskName, { taskName, build })
-      } catch (e) {
-        throw new HardhatPluginError(PLUGIN_NAME, e?.message)
-      }
-    }
-  })
+  )
 
 subtask(TASK_PACKAGE_TYPECHAIN, 'package typechain contracts')
   .addOptionalParam('build', 'build or setup only', true, types.boolean)
